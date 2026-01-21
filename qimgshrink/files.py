@@ -10,7 +10,6 @@ Purpose: File scanning utilities for finding image files.
 from inspect import currentframe
 from pathlib import Path
 from typing import List, Optional
-import os
 import pwd
 import grp
 

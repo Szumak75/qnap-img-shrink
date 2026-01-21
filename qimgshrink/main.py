@@ -11,15 +11,15 @@ import argparse
 from inspect import currentframe
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import yaml
 
 from jsktoolbox.basetool import BData
 from jsktoolbox.raisetool import Raise
-from jsktoolbox.attribtool import ReadOnlyClass, NoDynamicAttributes
+from jsktoolbox.attribtool import ReadOnlyClass
 
-from qimgshrink.files import FileFind, ImageFileInfo
+from qimgshrink.files import FileFind
 from qimgshrink.converter import Converter
 
 
