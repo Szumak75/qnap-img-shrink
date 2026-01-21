@@ -1,3 +1,3 @@
-wrk_dir: "/home/szumak/Projects/qnap-img-shrink/tmp/test_images/"
+wrk_dir: "/home/szumak/Projects/qnap-img-shrink/tmp/"
 max_size: 1920
 quality: 85
