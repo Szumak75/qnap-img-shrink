@@ -188,7 +188,11 @@ class App(BData):
         return tmp
 
     def run(self) -> None:
-        """Run the main application logic."""
+        """Run the main application logic.
+
+        Scans working directory for images, processes them according to
+        configuration, and displays conversion statistics.
+        """
         self.config.load_from_file()
 
         # Show mode
@@ -232,6 +236,9 @@ class App(BData):
 
 def main() -> int:
     """Main entry point with CLI argument parsing.
+
+    Parses command line arguments, creates App instance,
+    and runs the application.
 
     ### Returns:
     int - Exit code (0 for success).

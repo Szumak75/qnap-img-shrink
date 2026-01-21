@@ -370,7 +370,11 @@ class Converter(BData):
             )
 
     def print_report(self) -> None:
-        """Print conversion statistics report."""
+        """Print conversion statistics report to console.
+
+        Displays formatted statistics including total files processed,
+        skipped, size comparison, and compression ratio.
+        """
         print("\n" + "=" * 60)
         print(str(self.stats))
         print("=" * 60)

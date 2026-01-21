@@ -1,9 +1,22 @@
 [tool.poetry]
 name = "qnap-img-shrink"
 version = "0.1.0"
-description = ""
-authors = ["Jacek Kotlarski <jacek.kotlarski@bioseco.com>"]
+description = "Batch image resizing and compression tool with metadata preservation for QNAP NAS"
+authors = ["Jacek 'Szumak' Kotlarski <szumak@virthost.pl>"]
 readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/Szumak75/qnap-img-shrink"
+repository = "https://github.com/Szumak75/qnap-img-shrink"
+keywords = ["image", "resize", "compress", "qnap", "nas", "batch", "pillow"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: System Administrators",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+    "Topic :: System :: Filesystems",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
