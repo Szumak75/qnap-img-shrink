@@ -10,7 +10,7 @@ Purpose:
 from inspect import currentframe
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import yaml
 
@@ -18,7 +18,7 @@ from jsktoolbox.basetool import BData
 from jsktoolbox.raisetool import Raise
 from jsktoolbox.attribtool import ReadOnlyClass, NoDynamicAttributes
 
-from qimgshrink.files import FileFind
+from qimgshrink.files import FileFind, ImageFileInfo
 from qimgshrink.converter import Converter
 
 
@@ -167,15 +167,37 @@ class App(BData):
     def run(self) -> None:
         """Run the main application logic."""
         self.config.load_from_file()
+
+        # Find all images
         finder = FileFind(self.config.wrk_dir)
         images = finder.find_images()
+
+        if not images:
+            print("No images found to process.")
+            return
+
+        print(f"Found {len(images)} image(s) to process...")
+
+        # Initialize converter
+        converter = Converter(
+            max_size=self.config.max_size, quality=self.config.quality
+        )
+
+        # Process each image
         for img_info in images:
-            print(
-                f"Found image: {img_info.path} "
-                f"({img_info.owner}:{img_info.group}, "
-                f"{img_info.permissions_str}, "
-                f"{img_info.size} bytes)"
-            )
+            try:
+                was_processed = converter.convert(img_info)
+                if was_processed:
+                    print(f"  ✓ Processed: {img_info.path}")
+                else:
+                    print(f"  - Skipped (no resize needed): {img_info.path}")
+            except PermissionError:
+                print(f"  ✗ Permission denied: {img_info.path}")
+            except Exception as e:
+                print(f"  ✗ Error: {img_info.path} - {e}")
+
+        # Print final report
+        converter.print_report()
 
 
 # #[EOF]#######################################################################

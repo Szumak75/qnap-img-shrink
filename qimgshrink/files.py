@@ -19,7 +19,17 @@ from jsktoolbox.basetool import BData
 from jsktoolbox.raisetool import Raise
 
 
-class ImageFileInfo:
+class _ImageFileInfoKeys(object, metaclass=ReadOnlyClass):
+    """Keys for ImageFileInfo data storage."""
+
+    PATH: str = "__path__"
+    PERMISSIONS: str = "__permissions__"
+    OWNER: str = "__owner__"
+    GROUP: str = "__group__"
+    SIZE: str = "__size__"
+
+
+class ImageFileInfo(BData):
     """Container class for image file metadata.
 
     Stores file path and metadata including permissions, owner, and group.
@@ -42,55 +52,137 @@ class ImageFileInfo:
         * group: str - File group name.
         * size: int - File size in bytes.
         """
-        self._path = path
-        self._permissions = permissions
-        self._owner = owner
-        self._group = group
-        self._size = size
+        self._set_data(key=_ImageFileInfoKeys.PATH, value=path, set_default_type=str)
+        self._set_data(
+            key=_ImageFileInfoKeys.PERMISSIONS,
+            value=permissions,
+            set_default_type=int,
+        )
+        self._set_data(key=_ImageFileInfoKeys.OWNER, value=owner, set_default_type=str)
+        self._set_data(key=_ImageFileInfoKeys.GROUP, value=group, set_default_type=str)
+        self._set_data(key=_ImageFileInfoKeys.SIZE, value=size, set_default_type=int)
 
     @property
     def path(self) -> str:
-        """Get file path."""
-        return self._path
+        """Get file path.
+
+        ### Returns:
+        str - Absolute path to the file.
+
+        ### Raises:
+        * ValueError: If path is not set.
+        """
+        tmp: Optional[str] = self._get_data(key=_ImageFileInfoKeys.PATH)
+        if tmp is None:
+            raise Raise.error(
+                message="Path is not set in ImageFileInfo.",
+                exception=ValueError,
+                class_name=self._c_name,
+                currentframe=currentframe(),
+            )
+        return tmp
 
     @property
     def permissions(self) -> int:
-        """Get file permissions as octal integer."""
-        return self._permissions
+        """Get file permissions as octal integer.
+
+        ### Returns:
+        int - File permissions.
+
+        ### Raises:
+        * ValueError: If permissions are not set.
+        """
+        tmp: Optional[int] = self._get_data(key=_ImageFileInfoKeys.PERMISSIONS)
+        if tmp is None:
+            raise Raise.error(
+                message="Permissions are not set in ImageFileInfo.",
+                exception=ValueError,
+                class_name=self._c_name,
+                currentframe=currentframe(),
+            )
+        return tmp
 
     @property
     def permissions_str(self) -> str:
         """Get file permissions as string (e.g., 'rw-r--r--')."""
-        return oct(self._permissions)[-3:]
+        return oct(self.permissions)[-3:]
 
     @property
     def owner(self) -> str:
-        """Get file owner username."""
-        return self._owner
+        """Get file owner username.
+
+        ### Returns:
+        str - Owner username.
+
+        ### Raises:
+        * ValueError: If owner is not set.
+        """
+        tmp: Optional[str] = self._get_data(key=_ImageFileInfoKeys.OWNER)
+        if tmp is None:
+            raise Raise.error(
+                message="Owner is not set in ImageFileInfo.",
+                exception=ValueError,
+                class_name=self._c_name,
+                currentframe=currentframe(),
+            )
+        return tmp
 
     @property
     def group(self) -> str:
-        """Get file group name."""
-        return self._group
+        """Get file group name.
+
+        ### Returns:
+        str - Group name.
+
+        ### Raises:
+        * ValueError: If group is not set.
+        """
+        tmp: Optional[str] = self._get_data(key=_ImageFileInfoKeys.GROUP)
+        if tmp is None:
+            raise Raise.error(
+                message="Group is not set in ImageFileInfo.",
+                exception=ValueError,
+                class_name=self._c_name,
+                currentframe=currentframe(),
+            )
+        return tmp
 
     @property
     def size(self) -> int:
-        """Get file size in bytes."""
-        return self._size
+        """Get file size in bytes.
+
+        ### Returns:
+        int - File size.
+
+        ### Raises:
+        * ValueError: If size is not set.
+        """
+        tmp: Optional[int] = self._get_data(key=_ImageFileInfoKeys.SIZE)
+        if tmp is None:
+            raise Raise.error(
+                message="Size is not set in ImageFileInfo.",
+                exception=ValueError,
+                class_name=self._c_name,
+                currentframe=currentframe(),
+            )
+        return tmp
 
     def __repr__(self) -> str:
         """String representation of ImageFileInfo."""
         return (
-            f"ImageFileInfo(path={self._path!r}, "
-            f"permissions={oct(self._permissions)}, "
-            f"owner={self._owner!r}, "
-            f"group={self._group!r}, "
-            f"size={self._size})"
+            f"ImageFileInfo(path={self.path!r}, "
+            f"permissions={oct(self.permissions)}, "
+            f"owner={self.owner!r}, "
+            f"group={self.group!r}, "
+            f"size={self.size})"
         )
 
     def __str__(self) -> str:
         """Human-readable string representation."""
-        return f"{self._path} ({self._owner}:{self._group}, {self.permissions_str}, {self._size} bytes)"
+        return (
+            f"{self.path} ({self.owner}:{self.group}, "
+            f"{self.permissions_str}, {self.size} bytes)"
+        )
 
 
 class _Keys(object, metaclass=ReadOnlyClass):
