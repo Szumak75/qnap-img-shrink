@@ -1,0 +1,13 @@
+# Configuration file for qnap-img-shrink
+# Author: Jacek 'Szumak' Kotlarski --<szumak@virthost.pl>
+#
+# All parameters are optional. If not specified, default values will be used.
+
+# Working directory for temporary files
+wrk_dir: "/tmp/qimgshrink"
+
+# Maximum image size (pixels)
+max_size: 1920
+
+# Image quality (1-100)
+quality: 97
