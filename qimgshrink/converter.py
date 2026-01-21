@@ -14,7 +14,14 @@ import os
 import tempfile
 import shutil
 
-import PIL.Image as Image
+# Lazy import PIL - only when Converter is actually used
+try:
+    import PIL.Image as Image
+
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+    Image = None  # type: ignore
 
 from jsktoolbox.attribtool import ReadOnlyClass
 from jsktoolbox.basetool import BData
@@ -183,7 +190,17 @@ class Converter(BData):
         * max_size: int - Maximum size for longest image dimension.
         * quality: int - JPEG quality (1-100).
         * test_mode: bool - If True, analyze without modifying files.
+
+        ### Raises:
+        * ImportError: If Pillow (PIL) is not available.
         """
+        # Check if PIL is available
+        if not PIL_AVAILABLE:
+            raise ImportError(
+                "Pillow (PIL) is not available. "
+                "Install with 'pip install pillow' or use Converter2 (ImageMagick-based)."
+            )
+
         self._set_data(key=_Keys.MAX_SIZE, value=max_size, set_default_type=int)
         self._set_data(key=_Keys.QUALITY, value=quality, set_default_type=int)
         self._set_data(

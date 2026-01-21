@@ -20,7 +20,23 @@ from jsktoolbox.raisetool import Raise
 from jsktoolbox.attribtool import ReadOnlyClass
 
 from qimgshrink.files import FileFind
-from qimgshrink.converter import Converter
+
+# Try to import converters - handle import errors gracefully
+try:
+    from qimgshrink.converter import Converter
+
+    PILLOW_AVAILABLE = True
+except ImportError:
+    PILLOW_AVAILABLE = False
+    Converter = None  # type: ignore
+
+try:
+    from qimgshrink.converter2 import Converter2
+
+    IMAGEMAGICK_AVAILABLE = True
+except (ImportError, RuntimeError):
+    IMAGEMAGICK_AVAILABLE = False
+    Converter2 = None  # type: ignore
 
 
 class _Keys(object, metaclass=ReadOnlyClass):
@@ -209,12 +225,47 @@ class App(BData):
 
         print(f"Found {len(images)} image(s) to process...")
 
-        # Initialize converter
-        converter = Converter(
-            max_size=self.config.max_size,
-            quality=self.config.quality,
-            test_mode=self.config.test_mode,
-        )
+        # Initialize converter with automatic selection
+        converter = None
+        converter_errors = []
+
+        # Try Pillow first (faster)
+        if PILLOW_AVAILABLE and Converter is not None:
+            try:
+                converter = Converter(
+                    max_size=self.config.max_size,
+                    quality=self.config.quality,
+                    test_mode=self.config.test_mode,
+                )
+                print("Using Pillow-based converter (Converter)")
+            except ImportError as e:
+                converter_errors.append(f"Pillow: {e}")
+
+        # Try ImageMagick if Pillow failed or not available
+        if converter is None and IMAGEMAGICK_AVAILABLE and Converter2 is not None:
+            try:
+                converter = Converter2(
+                    max_size=self.config.max_size,
+                    quality=self.config.quality,
+                    test_mode=self.config.test_mode,
+                )
+                print("Using ImageMagick-based converter (Converter2)")
+            except (ImportError, RuntimeError) as e:
+                converter_errors.append(f"ImageMagick: {e}")
+
+        # Check if any converter is available
+        if converter is None:
+            print("\n" + "=" * 60)
+            print("ERROR: No image converter available!")
+            print("=" * 60)
+            print("\nAttempted converters:")
+            for error in converter_errors:
+                print(f"  ✗ {error}")
+            print("\nPlease install one of the following:")
+            print("  • Pillow: pip install pillow")
+            print("  • ImageMagick: apt-get install imagemagick (or opkg on QNAP)")
+            print("=" * 60)
+            return
 
         # Process each image
         for img_info in images:

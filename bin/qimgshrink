@@ -119,14 +119,30 @@ check_dependencies() {
         print_info "Installing dependencies from $REQUIREMENTS..."
         
         pip install -q --upgrade pip
-        pip install -q -r "$REQUIREMENTS"
         
-        if [ $? -ne 0 ]; then
-            print_error "Failed to install dependencies"
-            exit 1
+        # Try to install with full requirements
+        if pip install -q -r "$REQUIREMENTS" 2>/dev/null; then
+            print_info "Dependencies installed successfully"
+        else
+            # Pillow installation failed - try minimal requirements
+            REQUIREMENTS_MINIMAL="$PROJECT_ROOT/requirements-minimal.txt"
+            
+            if [ -f "$REQUIREMENTS_MINIMAL" ]; then
+                print_warn "Pillow installation failed, trying minimal requirements..."
+                print_warn "You will need ImageMagick for image processing"
+                
+                if pip install -q -r "$REQUIREMENTS_MINIMAL"; then
+                    print_info "Minimal dependencies installed (without Pillow)"
+                    print_warn "Make sure ImageMagick is installed: which convert identify"
+                else
+                    print_error "Failed to install minimal dependencies"
+                    exit 1
+                fi
+            else
+                print_error "Failed to install dependencies and no minimal fallback found"
+                exit 1
+            fi
         fi
-        
-        print_info "Dependencies installed successfully"
     else
         print_info "All dependencies are installed"
     fi

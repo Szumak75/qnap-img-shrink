@@ -179,3 +179,36 @@ See LICENSE file for details.
 ## Author
 
 Jacek 'Szumak' Kotlarski - szumak@virthost.pl
+
+## Alternative Converter (ImageMagick)
+
+For platforms where Pillow cannot be compiled (e.g., QNAP NAS), an alternative ImageMagick-based converter is available.
+
+### Requirements
+
+- ImageMagick must be installed: `convert` and `identify` commands
+
+### Usage
+
+```python
+from qimgshrink.converter2 import Converter2
+
+# Same API as Converter
+converter = Converter2(max_size=1920, quality=85)
+```
+
+Or use the factory for automatic selection:
+
+```python
+from qimgshrink.converter_factory import create_converter
+
+# Automatically chooses best available implementation
+converter = create_converter(
+    max_size=1920,
+    quality=85,
+    prefer_imagemagick=True  # Optional: prefer ImageMagick over Pillow
+)
+```
+
+See [docs/CONVERTER2.md](docs/CONVERTER2.md) for detailed documentation.
+

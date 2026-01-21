@@ -36,3 +36,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type hints for all public APIs
 
 [0.1.0]: https://github.com/Szumak75/qnap-img-shrink/releases/tag/v0.1.0
+
+## [Unreleased]
+
+### Added
+- **Converter2**: ImageMagick-based converter implementation
+  - Alternative to Pillow for platforms without compilation support
+  - Uses external `convert` and `identify` commands
+  - Fully API-compatible with original Converter class
+  - Format-specific compression for JPEG and PNG
+  - Metadata preservation (permissions, owner, group)
+  - Test mode support
+- **converter_factory**: Factory function for automatic converter selection
+  - `create_converter()` with preference option
+  - Automatic fallback between implementations
+- Documentation: docs/CONVERTER2.md
+- Tests: 11 additional tests (Converter2 + factory)
+
+### Changed
+- Total test count: 77 tests (all passing)
+

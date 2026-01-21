@@ -96,3 +96,25 @@ wrk_dir: "/ścieżka/do/katalogu/"
 max_size: 1920
 quality: 85
 ```
+
+## Alternative Implementation
+
+### ✅ Converter2 - ImageMagick Backend
+
+**Status**: Completed (2026-01-21)
+
+Created alternative converter implementation using ImageMagick for platforms without Pillow support:
+
+- ✓ `qimgshrink/converter2.py` - ImageMagick-based converter
+- ✓ `qimgshrink/converter_factory.py` - Factory for choosing implementation
+- ✓ API compatible with original Converter class
+- ✓ Support for JPEG, PNG, BMP, TIFF formats
+- ✓ Format-specific compression (JPEG quality, PNG level 9)
+- ✓ Metadata preservation (permissions, owner, group)
+- ✓ Test mode support
+- ✓ 8 unit tests for Converter2
+- ✓ 3 unit tests for factory
+- ✓ Complete documentation in docs/CONVERTER2.md
+
+**Use case**: QNAP NAS and other embedded systems where Python C extensions cannot be compiled.
+
