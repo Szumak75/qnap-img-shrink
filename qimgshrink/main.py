@@ -243,13 +243,21 @@ def main() -> int:
     ### Returns:
     int - Exit code (0 for success).
     """
+    # Get script name from environment (set by launcher) or sys.argv[0]
+    import os
+
+    script_name = os.environ.get("QIMGSHRINK_SCRIPT_NAME")
+    if not script_name:
+        script_name = os.path.basename(sys.argv[0])
+
     parser = argparse.ArgumentParser(
+        prog=script_name,
         description="QNAP Image Shrink - Resize and compress images",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
 Examples:
-  %(prog)s              Process images normally
-  %(prog)s -t           Test mode (no modifications)
+  {script_name}              Process images normally
+  {script_name} -t           Test mode (no modifications)
         """,
     )
 

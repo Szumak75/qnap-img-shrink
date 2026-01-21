@@ -149,6 +149,10 @@ main() {
     
     # Change to project root for proper module resolution
     cd "$PROJECT_ROOT"
+    
+    # Set QIMGSHRINK_SCRIPT_NAME for proper help display
+    export QIMGSHRINK_SCRIPT_NAME="$(basename "$SCRIPT_PATH")"
+    
     python -m qimgshrink.main "$@"
     exit_code=$?
     
