@@ -4,9 +4,10 @@ main.py
 Author : Jacek 'Szumak' Kotlarski --<szumak@virthost.pl>
 Created: 21.01.2026, 09:39:51
 
-Purpose:
+Purpose: Main application module for qimgshrink.
 """
 
+import argparse
 from inspect import currentframe
 import sys
 from pathlib import Path
@@ -29,6 +30,7 @@ class _Keys(object, metaclass=ReadOnlyClass):
     WRK_DIR: str = "__wrk_dir__"
     MAX_SIZE: str = "__max_size__"
     QUALITY: str = "__quality__"
+    TEST_MODE: str = "__test_mode__"
 
     # Application keys
     CONFIG: str = "__config__"
@@ -100,6 +102,27 @@ class Config(BData):
         """Set the image quality."""
         self._set_data(key=_Keys.QUALITY, value=value)
 
+    @property
+    def test_mode(self) -> bool:
+        """Get test mode flag.
+
+        ### Returns:
+        bool - True if in test mode (no file modifications).
+        """
+        tmp: Optional[bool] = self._get_data(key=_Keys.TEST_MODE)
+        if tmp is None:
+            return False
+        return tmp
+
+    @test_mode.setter
+    def test_mode(self, value: bool) -> None:
+        """Set test mode flag.
+
+        ### Arguments:
+        * value: bool - True to enable test mode.
+        """
+        self._set_data(key=_Keys.TEST_MODE, value=value)
+
     def load_from_file(self, config_path: Optional[Path] = None) -> None:
         """Load configuration from YAML file.
 
@@ -168,6 +191,10 @@ class App(BData):
         """Run the main application logic."""
         self.config.load_from_file()
 
+        # Show mode
+        if self.config.test_mode:
+            print("\n*** TEST MODE ENABLED - No files will be modified ***\n")
+
         # Find all images
         finder = FileFind(self.config.wrk_dir)
         images = finder.find_images()
@@ -180,7 +207,9 @@ class App(BData):
 
         # Initialize converter
         converter = Converter(
-            max_size=self.config.max_size, quality=self.config.quality
+            max_size=self.config.max_size,
+            quality=self.config.quality,
+            test_mode=self.config.test_mode,
         )
 
         # Process each image
@@ -188,7 +217,8 @@ class App(BData):
             try:
                 was_processed = converter.convert(img_info)
                 if was_processed:
-                    print(f"  ✓ Processed: {img_info.path}")
+                    action = "Would process" if self.config.test_mode else "Processed"
+                    print(f"  ✓ {action}: {img_info.path}")
                 else:
                     print(f"  - Skipped (no resize needed): {img_info.path}")
             except PermissionError:
@@ -200,4 +230,42 @@ class App(BData):
         converter.print_report()
 
 
+def main() -> int:
+    """Main entry point with CLI argument parsing.
+
+    ### Returns:
+    int - Exit code (0 for success).
+    """
+    parser = argparse.ArgumentParser(
+        description="QNAP Image Shrink - Resize and compress images",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s              Process images normally
+  %(prog)s -t           Test mode (no modifications)
+        """,
+    )
+
+    parser.add_argument(
+        "-t",
+        "--test",
+        action="store_true",
+        help="Test mode - analyze files without modifying them",
+    )
+
+    args = parser.parse_args()
+
+    # Create and configure application
+    app = App()
+    app.config.test_mode = args.test
+
+    # Run
+    app.run()
+
+    return 0
+
+
 # #[EOF]#######################################################################
+
+if __name__ == "__main__":
+    sys.exit(main())

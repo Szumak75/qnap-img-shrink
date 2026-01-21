@@ -325,3 +325,103 @@ if __name__ == "__main__":
 
 
 # #[EOF]#######################################################################
+
+
+class TestConverterTestMode:
+    """Tests for Converter test mode functionality."""
+
+    def create_test_image(self, path: Path, size: tuple = (3000, 2000)) -> None:
+        """Helper to create test image."""
+        img = Image.new("RGB", size, "red")
+        img.save(path, "JPEG")
+
+    def create_image_file_info(self, path: Path) -> ImageFileInfo:
+        """Helper to create ImageFileInfo object."""
+        import pwd
+        import grp
+
+        stat = os.stat(path)
+        try:
+            owner = pwd.getpwuid(stat.st_uid).pw_name
+        except KeyError:
+            owner = str(stat.st_uid)
+        try:
+            group = grp.getgrgid(stat.st_gid).gr_name
+        except KeyError:
+            group = str(stat.st_gid)
+
+        return ImageFileInfo(
+            path=str(path),
+            permissions=stat.st_mode & 0o777,
+            owner=owner,
+            group=group,
+            size=stat.st_size,
+        )
+
+    def test_converter_test_mode_initialization(self) -> None:
+        """Test Converter can be initialized with test mode."""
+        converter = Converter(max_size=1920, quality=85, test_mode=True)
+
+        assert converter.test_mode is True
+        assert converter.max_size == 1920
+        assert converter.quality == 85
+
+    def test_converter_test_mode_default_false(self) -> None:
+        """Test Converter test mode defaults to False."""
+        converter = Converter(max_size=1920, quality=85)
+
+        assert converter.test_mode is False
+
+    def test_convert_in_test_mode_doesnt_modify_file(self) -> None:
+        """Test convert() in test mode doesn't modify files."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create large test image
+            image_path = Path(tmpdir) / "test_image.jpg"
+            self.create_test_image(image_path, size=(3000, 2000))
+
+            # Get original file info
+            original_size = image_path.stat().st_size
+            original_mtime = image_path.stat().st_mtime
+
+            # Create ImageFileInfo
+            info = self.create_image_file_info(image_path)
+
+            # Convert in test mode
+            converter = Converter(max_size=1920, quality=85, test_mode=True)
+            result = converter.convert(info)
+
+            # File should be marked as "would be processed"
+            assert result is True
+
+            # File should not be modified
+            assert image_path.stat().st_size == original_size
+            assert image_path.stat().st_mtime == original_mtime
+
+            # Statistics should still be updated
+            assert converter.stats.processed_files == 1
+            assert converter.stats.size_before > 0
+            assert converter.stats.size_after > 0
+
+    def test_convert_in_test_mode_updates_statistics(self) -> None:
+        """Test convert() in test mode updates statistics correctly."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create large test image
+            image_path = Path(tmpdir) / "large.jpg"
+            self.create_test_image(image_path, size=(2500, 1800))
+
+            info = self.create_image_file_info(image_path)
+
+            # Convert in test mode
+            converter = Converter(max_size=1920, quality=85, test_mode=True)
+            converter.convert(info)
+
+            # Verify statistics
+            assert converter.stats.processed_files == 1
+            assert converter.stats.skipped_files == 0
+            assert converter.stats.total_files == 1
+            assert converter.stats.size_before > 0
+            assert converter.stats.size_after < converter.stats.size_before
+            assert converter.stats.saved_bytes > 0
+
+
+# #[EOF]#######################################################################

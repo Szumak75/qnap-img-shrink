@@ -1,0 +1,166 @@
+#!/bin/sh
+# -*- coding: utf-8 -*-
+#
+# qimgshrink - Launcher script for QNAP Image Shrink application
+#
+# Author: Jacek 'Szumak' Kotlarski --<szumak@virthost.pl>
+# Created: 2026-01-21
+#
+# Purpose: Initialize environment and run the application.
+#
+# Note: This script properly resolves symlinks using 'readlink -f',
+#       so it can be symlinked from /usr/local/bin or any other location.
+#
+
+# Get script directory and project root (resolve symlinks)
+# This ensures correct paths even when script is called via symlink
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+VENV_DIR="$PROJECT_ROOT/.venv"
+REQUIREMENTS="$PROJECT_ROOT/requirements.txt"
+PYTHON_APP="$PROJECT_ROOT/qimgshrink/main.py"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Print colored message
+print_info() {
+    printf "${GREEN}[INFO]${NC} %s\n" "$1"
+}
+
+print_warn() {
+    printf "${YELLOW}[WARN]${NC} %s\n" "$1"
+}
+
+print_error() {
+    printf "${RED}[ERROR]${NC} %s\n" "$1"
+}
+
+# Find suitable Python version
+find_python() {
+    for py_cmd in python3.12 python3.11 python3; do
+        if command -v "$py_cmd" >/dev/null 2>&1; then
+            py_version=$("$py_cmd" --version 2>&1 | cut -d' ' -f2)
+            py_major=$(echo "$py_version" | cut -d'.' -f1)
+            py_minor=$(echo "$py_version" | cut -d'.' -f2)
+            
+            # Check if version is 3.11 or higher
+            if [ "$py_major" -eq 3 ] && [ "$py_minor" -ge 11 ]; then
+                echo "$py_cmd"
+                return 0
+            fi
+        fi
+    done
+    return 1
+}
+
+# Check if venv exists, create if missing
+setup_venv() {
+    if [ ! -d "$VENV_DIR" ]; then
+        print_warn "Virtual environment not found at: $VENV_DIR"
+        
+        PYTHON_CMD=$(find_python)
+        if [ $? -ne 0 ]; then
+            print_error "Python 3.11 or higher not found!"
+            print_error "Please install Python 3.11 or 3.12"
+            exit 1
+        fi
+        
+        print_info "Found Python: $PYTHON_CMD ($($PYTHON_CMD --version 2>&1))"
+        print_info "Creating virtual environment..."
+        
+        "$PYTHON_CMD" -m venv "$VENV_DIR"
+        if [ $? -ne 0 ]; then
+            print_error "Failed to create virtual environment"
+            exit 1
+        fi
+        
+        print_info "Virtual environment created successfully"
+    else
+        print_info "Virtual environment found at: $VENV_DIR"
+    fi
+}
+
+# Check and install dependencies
+check_dependencies() {
+    if [ ! -f "$REQUIREMENTS" ]; then
+        print_error "Requirements file not found: $REQUIREMENTS"
+        exit 1
+    fi
+    
+    # Activate venv
+    . "$VENV_DIR/bin/activate"
+    
+    print_info "Checking dependencies..."
+    
+    # Check if all packages are installed
+    missing_packages=0
+    while IFS= read -r line; do
+        # Skip empty lines and comments
+        case "$line" in
+            ""|\#*) continue ;;
+        esac
+        
+        # Extract package name (before ==, >=, etc.)
+        package=$(echo "$line" | sed 's/[=<>].*//' | tr -d ' ')
+        
+        if ! python -c "import $package" 2>/dev/null; then
+            missing_packages=1
+            break
+        fi
+    done < "$REQUIREMENTS"
+    
+    if [ $missing_packages -eq 1 ]; then
+        print_warn "Some dependencies are missing or outdated"
+        print_info "Installing dependencies from $REQUIREMENTS..."
+        
+        pip install -q --upgrade pip
+        pip install -q -r "$REQUIREMENTS"
+        
+        if [ $? -ne 0 ]; then
+            print_error "Failed to install dependencies"
+            exit 1
+        fi
+        
+        print_info "Dependencies installed successfully"
+    else
+        print_info "All dependencies are installed"
+    fi
+}
+
+# Main script execution
+main() {
+    print_info "QNAP Image Shrink - Launcher"
+    print_info "Project root: $PROJECT_ROOT"
+    
+    # Setup virtual environment
+    setup_venv
+    
+    # Check and install dependencies
+    check_dependencies
+    
+    # Run the application with all passed arguments
+    print_info "Starting application..."
+    echo ""
+    
+    # Change to project root for proper module resolution
+    cd "$PROJECT_ROOT"
+    python -m qimgshrink.main "$@"
+    exit_code=$?
+    
+    echo ""
+    if [ $exit_code -eq 0 ]; then
+        print_info "Application finished successfully"
+    else
+        print_error "Application exited with code: $exit_code"
+    fi
+    
+    return $exit_code
+}
+
+# Run main function with all script arguments
+main "$@"

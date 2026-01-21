@@ -164,6 +164,7 @@ class _Keys(object, metaclass=ReadOnlyClass):
     MAX_SIZE: str = "__max_size__"
     QUALITY: str = "__quality__"
     STATS: str = "__stats__"
+    TEST_MODE: str = "__test_mode__"
 
 
 class Converter(BData):
@@ -175,18 +176,20 @@ class Converter(BData):
     - Preserves file permissions
     """
 
-    def __init__(self, max_size: int, quality: int) -> None:
+    def __init__(self, max_size: int, quality: int, test_mode: bool = False) -> None:
         """Initialize Converter with configuration.
 
         ### Arguments:
         * max_size: int - Maximum size for longest image dimension.
         * quality: int - JPEG quality (1-100).
+        * test_mode: bool - If True, analyze without modifying files.
         """
         self._set_data(key=_Keys.MAX_SIZE, value=max_size, set_default_type=int)
         self._set_data(key=_Keys.QUALITY, value=quality, set_default_type=int)
         self._set_data(
             key=_Keys.STATS, value=ConversionStats(), set_default_type=ConversionStats
         )
+        self._set_data(key=_Keys.TEST_MODE, value=test_mode, set_default_type=bool)
 
     @property
     def max_size(self) -> int:
@@ -225,6 +228,18 @@ class Converter(BData):
                 class_name=self._c_name,
                 currentframe=currentframe(),
             )
+        return tmp
+
+    @property
+    def test_mode(self) -> bool:
+        """Get test mode flag.
+
+        ### Returns:
+        bool - True if in test mode.
+        """
+        tmp: Optional[bool] = self._get_data(key=_Keys.TEST_MODE)
+        if tmp is None:
+            return False
         return tmp
 
     def convert(self, image_info: ImageFileInfo) -> bool:
@@ -313,23 +328,28 @@ class Converter(BData):
                     size_before = image_info.size
                     size_after = tmp_path.stat().st_size
 
-                    # Replace original file (use shutil.move for cross-device compatibility)
-                    shutil.move(str(tmp_path), str(file_path))
+                    # In test mode, don't actually replace the file
+                    if not self.test_mode:
+                        # Replace original file (use shutil.move for cross-device compatibility)
+                        shutil.move(str(tmp_path), str(file_path))
 
-                    # Restore original permissions
-                    os.chmod(file_path, image_info.permissions)
+                        # Restore original permissions
+                        os.chmod(file_path, image_info.permissions)
 
-                    # Try to restore owner/group (may require privileges)
-                    try:
-                        import pwd
-                        import grp
+                        # Try to restore owner/group (may require privileges)
+                        try:
+                            import pwd
+                            import grp
 
-                        uid = pwd.getpwnam(image_info.owner).pw_uid
-                        gid = grp.getgrnam(image_info.group).gr_gid
-                        os.chown(file_path, uid, gid)
-                    except (KeyError, PermissionError):
-                        # Cannot restore ownership, skip
-                        pass
+                            uid = pwd.getpwnam(image_info.owner).pw_uid
+                            gid = grp.getgrnam(image_info.group).gr_gid
+                            os.chown(file_path, uid, gid)
+                        except (KeyError, PermissionError):
+                            # Cannot restore ownership, skip
+                            pass
+                    else:
+                        # Test mode: clean up temporary file
+                        tmp_path.unlink()
 
                     # Update statistics
                     self.stats.add_processed(size_before, size_after)
