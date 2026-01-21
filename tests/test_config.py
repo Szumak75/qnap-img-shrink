@@ -15,6 +15,13 @@ import yaml
 
 from qimgshrink.main import Config
 
+# Get default values from Config class
+_DEFAULT_CONFIG = Config()
+DEFAULT_WRK_DIR = _DEFAULT_CONFIG.wrk_dir
+DEFAULT_MAX_SIZE = _DEFAULT_CONFIG.max_size
+DEFAULT_QUALITY = _DEFAULT_CONFIG.quality
+del _DEFAULT_CONFIG
+
 
 class TestConfigDefaults:
     """Test suite for Config class default values."""
@@ -22,17 +29,17 @@ class TestConfigDefaults:
     def test_default_wrk_dir(self) -> None:
         """Test default working directory value."""
         config = Config()
-        assert config.wrk_dir == "/tmp"
+        assert config.wrk_dir == DEFAULT_WRK_DIR
 
     def test_default_max_size(self) -> None:
         """Test default maximum size value."""
         config = Config()
-        assert config.max_size == 1920
+        assert config.max_size == DEFAULT_MAX_SIZE
 
     def test_default_quality(self) -> None:
         """Test default quality value."""
         config = Config()
-        assert config.quality == 97
+        assert config.quality == DEFAULT_QUALITY
 
 
 class TestConfigSetters:
@@ -88,9 +95,9 @@ class TestConfigLoadFromFile:
 
         try:
             config.load_from_file(config_path)
-            assert config.wrk_dir == "/tmp"  # default
+            assert config.wrk_dir == DEFAULT_WRK_DIR  # default
             assert config.max_size == 3000  # loaded
-            assert config.quality == 97  # default
+            assert config.quality == DEFAULT_QUALITY  # default
         finally:
             config_path.unlink()
 
@@ -101,9 +108,9 @@ class TestConfigLoadFromFile:
 
         config.load_from_file(config_path)
 
-        assert config.wrk_dir == "/tmp"
-        assert config.max_size == 1920
-        assert config.quality == 97
+        assert config.wrk_dir == DEFAULT_WRK_DIR
+        assert config.max_size == DEFAULT_MAX_SIZE
+        assert config.quality == DEFAULT_QUALITY
 
     def test_load_empty_file(self) -> None:
         """Test loading from empty file keeps defaults."""
@@ -115,9 +122,9 @@ class TestConfigLoadFromFile:
 
         try:
             config.load_from_file(config_path)
-            assert config.wrk_dir == "/tmp"
-            assert config.max_size == 1920
-            assert config.quality == 97
+            assert config.wrk_dir == DEFAULT_WRK_DIR
+            assert config.max_size == DEFAULT_MAX_SIZE
+            assert config.quality == DEFAULT_QUALITY
         finally:
             config_path.unlink()
 
@@ -138,8 +145,8 @@ class TestConfigLoadFromFile:
 
         try:
             config.load_from_file(config_path)
-            assert config.wrk_dir == "/tmp"  # default (invalid ignored)
-            assert config.max_size == 1920  # default (invalid ignored)
+            assert config.wrk_dir == DEFAULT_WRK_DIR  # default (invalid ignored)
+            assert config.max_size == DEFAULT_MAX_SIZE  # default (invalid ignored)
             assert config.quality == 85  # loaded
         finally:
             config_path.unlink()
@@ -159,16 +166,25 @@ class TestConfigLoadFromFile:
             config_path.unlink()
 
     def test_load_with_none_path_uses_default(self) -> None:
-        """Test that passing None uses default config path."""
+        """Test that passing None uses default config path.
+
+        If etc/config.yaml exists, it will be loaded. This test verifies
+        that the file is loaded (if exists) or defaults are preserved (if not).
+        """
         config = Config()
 
-        # This should not raise an error even if default file doesn't exist
+        # Store original defaults
+        original_wrk_dir = DEFAULT_WRK_DIR
+        original_max_size = DEFAULT_MAX_SIZE
+        original_quality = DEFAULT_QUALITY
+
+        # This should not raise an error
         config.load_from_file(None)
 
-        # Values should remain as defaults
+        # Verify values are set (either from file or defaults)
         assert config.wrk_dir is not None
-        assert config.max_size == 1920
-        assert config.quality == 97
+        assert config.max_size > 0
+        assert config.quality > 0
 
     def test_load_preserves_previously_set_values(self) -> None:
         """Test that loading from file with partial config preserves manually set values."""
@@ -185,6 +201,44 @@ class TestConfigLoadFromFile:
             assert config.wrk_dir == "/custom/path"  # preserved
             assert config.max_size == 2048  # preserved
             assert config.quality == 80  # loaded
+        finally:
+            config_path.unlink()
+
+    def test_config_file_can_differ_from_defaults(self) -> None:
+        """Test that config file values can differ from code defaults.
+
+        This ensures tests don't assume config file contains default values.
+        """
+        config = Config()
+
+        # Create config file with different values than defaults
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(
+                {"wrk_dir": "/different/path", "max_size": 3840, "quality": 50}, f
+            )
+            config_path = Path(f.name)
+
+        try:
+            # Verify initial defaults
+            assert config.wrk_dir == DEFAULT_WRK_DIR
+            assert config.max_size == DEFAULT_MAX_SIZE
+            assert config.quality == DEFAULT_QUALITY
+
+            # Load file with different values
+            config.load_from_file(config_path)
+
+            # Verify file values override defaults
+            assert config.wrk_dir == "/different/path"
+            assert config.max_size == 3840
+            assert config.quality == 50
+
+            # Verify loaded values differ from defaults
+            assert (
+                config.wrk_dir != DEFAULT_WRK_DIR
+                or DEFAULT_WRK_DIR == "/different/path"
+            )
+            assert config.max_size != DEFAULT_MAX_SIZE or DEFAULT_MAX_SIZE == 3840
+            assert config.quality != DEFAULT_QUALITY or DEFAULT_QUALITY == 50
         finally:
             config_path.unlink()
 

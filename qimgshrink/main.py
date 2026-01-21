@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 main.py
@@ -19,13 +18,20 @@ from jsktoolbox.basetool import BData
 from jsktoolbox.raisetool import Raise
 from jsktoolbox.attribtool import ReadOnlyClass, NoDynamicAttributes
 
+from qimgshrink.files import FileFind
+from qimgshrink.converter import Converter
+
 
 class _Keys(object, metaclass=ReadOnlyClass):
     """Class containing constant keys for configuration."""
 
-    WRK_DIR = "__wrk_dir__"
-    MAX_SIZE = "__max_size__"
-    QUALITY = "__quality__"
+    # Configuration keys
+    WRK_DIR: str = "__wrk_dir__"
+    MAX_SIZE: str = "__max_size__"
+    QUALITY: str = "__quality__"
+
+    # Application keys
+    CONFIG: str = "__config__"
 
 
 class Config(BData):
@@ -138,7 +144,38 @@ class Config(BData):
             )
 
 
-if __name__ == "__main__":
-    sys.exit(0)
+class App(BData):
+    """Main application class for qimgshrink."""
+
+    def __init__(self) -> None:
+        self._set_data(key=_Keys.CONFIG, value=Config(), set_default_type=Config)
+
+    @property
+    def config(self) -> Config:
+        """Get the configuration object."""
+        tmp: Optional[Config] = self._get_data(key=_Keys.CONFIG)
+        if tmp is None:
+            raise Raise.error(
+                message="Configuration is not set in application.",
+                exception=ValueError,
+                class_name=self._c_name,
+                currentframe=currentframe(),
+            )
+
+        return tmp
+
+    def run(self) -> None:
+        """Run the main application logic."""
+        self.config.load_from_file()
+        finder = FileFind(self.config.wrk_dir)
+        images = finder.find_images()
+        for img_info in images:
+            print(
+                f"Found image: {img_info.path} "
+                f"({img_info.owner}:{img_info.group}, "
+                f"{img_info.permissions_str}, "
+                f"{img_info.size} bytes)"
+            )
+
 
 # #[EOF]#######################################################################

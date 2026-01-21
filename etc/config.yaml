@@ -4,7 +4,7 @@
 # All parameters are optional. If not specified, default values will be used.
 
 # Working directory for temporary files
-wrk_dir: "/tmp/qimgshrink"
+wrk_dir: "/home/szumak/Projects/qnap-img-shrink/tmp/"
 
 # Maximum image size (pixels)
 max_size: 1920
