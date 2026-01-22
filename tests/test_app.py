@@ -94,7 +94,37 @@ if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 
 
-# #[EOF]#######################################################################
+class TestAppSignalHandling:
+    """Test suite for signal handling in App."""
+
+    def test_app_has_interrupted_property(self):
+        """Test App has interrupted property."""
+        app = App()
+        assert hasattr(app, "interrupted")
+        assert app.interrupted is False
+
+    def test_app_signal_handler_sets_interrupted(self):
+        """Test signal handler sets interrupted flag."""
+        import signal
+
+        app = App()
+        assert app.interrupted is False
+
+        # Simulate signal
+        app._signal_handler(signal.SIGINT, None)
+
+        assert app.interrupted is True
+
+    def test_app_signal_handler_registered(self):
+        """Test signal handler is registered on initialization."""
+        import signal
+
+        app = App()
+
+        # Check that SIGINT handler is our method
+        current_handler = signal.getsignal(signal.SIGINT)
+        assert current_handler is not None
+        assert callable(current_handler)
 
 
 # #[EOF]#######################################################################

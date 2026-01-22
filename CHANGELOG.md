@@ -50,8 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **converter_factory**: Factory function for automatic converter selection
   - `create_converter()` with preference option
   - Automatic fallback between implementations
-- Documentation: docs/CONVERTER2.md
-- Tests: 11 additional tests (Converter2 + factory)
+- **Graceful interruption handling**: Ctrl+C (SIGINT) support
+  - Completes current file conversion before exit
+  - Displays statistics for completed operations
+  - Clean shutdown with exit code 130
+  - Signal handler registration in App class
+- Documentation: docs/CONVERTER2.md, docs/QNAP_DEPLOYMENT.md
+- Tests: 14 additional tests (Converter2 + factory + signal handling)
 
 ### Changed
 - **BREAKING**: ImageFileInfo now stores uid/gid (int) instead of owner/group (str)
@@ -60,6 +65,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixes potential KeyError issues on QNAP and similar platforms
   - Direct use of numeric IDs for os.chown() operations
 - Metadata preservation: Updated to use numeric uid/gid directly
-- Total test count: 77 tests (all passing)
-- Documentation updated to reflect uid/gid changes
+- Launcher script: Early sourcing of QNAP Python3 profile
+  - Global environment variable setup
+  - Explicit re-export of PATH, PYTHONPATH, LD_LIBRARY_PATH
+  - Information message when profile loaded
+- Total test count: 80 tests (all passing)
+- Documentation updated to reflect uid/gid and signal handling changes
 

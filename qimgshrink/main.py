@@ -9,6 +9,7 @@ Purpose: Main application module for qimgshrink.
 
 import argparse
 from inspect import currentframe
+import signal
 import sys
 from pathlib import Path
 from typing import Optional
@@ -42,6 +43,7 @@ class _Keys(object, metaclass=ReadOnlyClass):
 
     # Application keys
     CONFIG: str = "__config__"
+    INTERRUPTED: str = "__interrupted__"
 
 
 class Config(BData):
@@ -180,6 +182,29 @@ class App(BData):
 
     def __init__(self) -> None:
         self._set_data(key=_Keys.CONFIG, value=Config(), set_default_type=Config)
+        self._set_data(key=_Keys.INTERRUPTED, value=False, set_default_type=bool)
+
+        # Setup signal handler for graceful shutdown
+        signal.signal(signal.SIGINT, self._signal_handler)
+
+    def _signal_handler(self, signum: int, frame) -> None:
+        """Handle interrupt signal (Ctrl+C).
+
+        Sets interrupted flag to allow current file conversion to finish
+        before graceful shutdown.
+
+        ### Arguments:
+        * signum: int - Signal number.
+        * frame - Current stack frame.
+        """
+        print("\n\n*** Interrupt received - finishing current file... ***")
+        self._set_data(key=_Keys.INTERRUPTED, value=True)
+
+    @property
+    def interrupted(self) -> bool:
+        """Check if application was interrupted."""
+        tmp: Optional[bool] = self._get_data(key=_Keys.INTERRUPTED)
+        return tmp if tmp is not None else False
 
     @property
     def config(self) -> Config:
@@ -248,6 +273,11 @@ class App(BData):
 
         # Process each image
         for img_info in images:
+            # Check if interrupted before processing next file
+            if self.interrupted:
+                print("\n*** Processing interrupted by user ***")
+                break
+
             try:
                 was_processed = converter.convert(img_info)
                 if was_processed:
@@ -260,8 +290,13 @@ class App(BData):
             except Exception as e:
                 print(f"  ✗ Error: {img_info.path} - {e}")
 
-        # Print final report
+        # Print final report (even if interrupted)
         converter.print_report()
+
+        # Return appropriate exit code
+        if self.interrupted:
+            print("\n*** Application terminated by user ***")
+            sys.exit(130)  # Standard exit code for SIGINT
 
 
 def main() -> int:

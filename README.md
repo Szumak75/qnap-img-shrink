@@ -12,6 +12,7 @@ A Python application for batch resizing and compressing images with metadata pre
   - Support for BMP, TIFF formats
 - **Metadata preservation** - maintains file permissions, uid, and gid
 - **Test mode** - analyze without modifying files
+- **Graceful interruption** - Ctrl+C handling with current file completion
 - **Comprehensive statistics** - detailed conversion reports
 
 ## Requirements
@@ -54,6 +55,24 @@ python -m qimgshrink.main --help
 
 # Help
 ./bin/qimgshrink --help
+```
+
+### Graceful Interruption
+
+Press **Ctrl+C** during processing to interrupt gracefully:
+- Currently processing file will be completed
+- Statistics for completed operations will be displayed
+- Application exits cleanly with code 130
+
+Example:
+```bash
+./bin/qimgshrink
+# Press Ctrl+C after processing starts
+# Output:
+# *** Interrupt received - finishing current file... ***
+# *** Processing interrupted by user ***
+# [Statistics displayed]
+# *** Application terminated by user ***
 ```
 
 ### System-wide Installation
