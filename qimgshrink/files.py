@@ -274,16 +274,16 @@ class FileFind(BData):
                     if file_path.suffix.lower() in self.SUPPORTED_EXTENSIONS:
                         # Get file statistics
                         stat_info = file_path.stat()
-
-                        # Create ImageFileInfo object
-                        img_info = ImageFileInfo(
-                            path=str(file_path.absolute()),
-                            permissions=stat_info.st_mode & 0o777,
-                            uid=stat_info.st_uid,
-                            gid=stat_info.st_gid,
-                            size=stat_info.st_size,
-                        )
-                        image_files.append(img_info)
+                        if stat_info.st_size > 0:
+                            # Create ImageFileInfo object
+                            img_info = ImageFileInfo(
+                                path=str(file_path.absolute()),
+                                permissions=stat_info.st_mode & 0o777,
+                                uid=stat_info.st_uid,
+                                gid=stat_info.st_gid,
+                                size=stat_info.st_size,
+                            )
+                            image_files.append(img_info)
         except PermissionError as exc:
             raise Raise.error(
                 message=f"Permission denied while scanning directory: {exc}",
