@@ -51,7 +51,7 @@ class Config(BData):
 
         self._set_data(key=_Keys.WRK_DIR, value="/tmp", set_default_type=str)
         self._set_data(key=_Keys.MAX_SIZE, value=1920, set_default_type=int)
-        self._set_data(key=_Keys.QUALITY, value=97, set_default_type=int)
+        self._set_data(key=_Keys.QUALITY, value=98, set_default_type=int)
 
     @property
     def wrk_dir(self) -> str:
