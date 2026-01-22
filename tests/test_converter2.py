@@ -67,24 +67,13 @@ class TestConverter2Convert:
 
     def create_image_file_info(self, path: Path) -> ImageFileInfo:
         """Helper to create ImageFileInfo object."""
-        import pwd
-        import grp
-
         stat = os.stat(path)
-        try:
-            owner = pwd.getpwuid(stat.st_uid).pw_name
-        except KeyError:
-            owner = str(stat.st_uid)
-        try:
-            group = grp.getgrgid(stat.st_gid).gr_name
-        except KeyError:
-            group = str(stat.st_gid)
 
         return ImageFileInfo(
             path=str(path),
             permissions=stat.st_mode & 0o777,
-            owner=owner,
-            group=group,
+            uid=stat.st_uid,
+            gid=stat.st_gid,
             size=stat.st_size,
         )
 
@@ -180,19 +169,14 @@ class TestConverter2Integration:
             converter = Converter2(max_size=1920, quality=85)
 
             # Process all images
-            import pwd
-            import grp
-
             for img_path in Path(tmpdir).glob("*.jpg"):
                 stat = os.stat(img_path)
-                owner = pwd.getpwuid(stat.st_uid).pw_name
-                group = grp.getgrgid(stat.st_gid).gr_name
 
                 info = ImageFileInfo(
                     path=str(img_path),
                     permissions=stat.st_mode & 0o777,
-                    owner=owner,
-                    group=group,
+                    uid=stat.st_uid,
+                    gid=stat.st_gid,
                     size=stat.st_size,
                 )
                 converter.convert(info)

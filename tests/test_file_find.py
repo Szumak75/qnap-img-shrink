@@ -24,15 +24,15 @@ class TestImageFileInfo:
         info = ImageFileInfo(
             path="/test/image.jpg",
             permissions=0o644,
-            owner="testuser",
-            group="testgroup",
+            uid=1000,
+            gid=100,
             size=1024,
         )
 
         assert info.path == "/test/image.jpg"
         assert info.permissions == 0o644
-        assert info.owner == "testuser"
-        assert info.group == "testgroup"
+        assert info.uid == 1000
+        assert info.gid == 100
         assert info.size == 1024
 
     def test_permissions_str_property(self):
@@ -40,8 +40,8 @@ class TestImageFileInfo:
         info = ImageFileInfo(
             path="/test/image.jpg",
             permissions=0o644,
-            owner="test",
-            group="test",
+            uid=1000,
+            gid=100,
             size=100,
         )
 
@@ -52,30 +52,31 @@ class TestImageFileInfo:
         info = ImageFileInfo(
             path="/test/image.jpg",
             permissions=0o755,
-            owner="user",
-            group="group",
+            uid=1000,
+            gid=100,
             size=2048,
         )
 
         repr_str = repr(info)
         assert "ImageFileInfo" in repr_str
         assert "/test/image.jpg" in repr_str
-        assert "user" in repr_str
-        assert "group" in repr_str
+        assert "uid=1000" in repr_str
+        assert "gid=100" in repr_str
 
     def test_str_method(self):
         """Test __str__ method."""
         info = ImageFileInfo(
             path="/test/image.jpg",
             permissions=0o644,
-            owner="user",
-            group="group",
+            uid=1000,
+            gid=100,
             size=1024,
         )
 
         str_repr = str(info)
         assert "/test/image.jpg" in str_repr
-        assert "user:group" in str_repr
+        assert "uid=1000" in str_repr
+        assert "gid=100" in str_repr
         assert "644" in str_repr
         assert "1024 bytes" in str_repr
 
@@ -265,8 +266,8 @@ class TestFileFindImages:
             img_info = images[0]
 
             # Verify metadata is present
-            assert img_info.owner is not None
-            assert img_info.group is not None
+            assert img_info.uid is not None
+            assert img_info.gid is not None
             assert isinstance(img_info.permissions, int)
             assert img_info.size >= 0
             assert img_info.permissions_str is not None

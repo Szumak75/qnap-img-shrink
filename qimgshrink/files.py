@@ -10,8 +10,6 @@ Purpose: File scanning utilities for finding image files.
 from inspect import currentframe
 from pathlib import Path
 from typing import List, Optional
-import pwd
-import grp
 
 from jsktoolbox.attribtool import ReadOnlyClass
 from jsktoolbox.basetool import BData
@@ -23,23 +21,23 @@ class _ImageFileInfoKeys(object, metaclass=ReadOnlyClass):
 
     PATH: str = "__path__"
     PERMISSIONS: str = "__permissions__"
-    OWNER: str = "__owner__"
-    GROUP: str = "__group__"
+    UID: str = "__uid__"
+    GID: str = "__gid__"
     SIZE: str = "__size__"
 
 
 class ImageFileInfo(BData):
     """Container class for image file metadata.
 
-    Stores file path and metadata including permissions, owner, and group.
+    Stores file path and metadata including permissions, uid, and gid.
     """
 
     def __init__(
         self,
         path: str,
         permissions: int,
-        owner: str,
-        group: str,
+        uid: int,
+        gid: int,
         size: int,
     ) -> None:
         """Initialize ImageFileInfo with file metadata.
@@ -47,8 +45,8 @@ class ImageFileInfo(BData):
         ### Arguments:
         * path: str - Absolute path to the image file.
         * permissions: int - File permissions as octal integer (e.g., 0o644).
-        * owner: str - File owner username.
-        * group: str - File group name.
+        * uid: int - File owner user ID.
+        * gid: int - File group ID.
         * size: int - File size in bytes.
         """
         self._set_data(key=_ImageFileInfoKeys.PATH, value=path, set_default_type=str)
@@ -57,8 +55,8 @@ class ImageFileInfo(BData):
             value=permissions,
             set_default_type=int,
         )
-        self._set_data(key=_ImageFileInfoKeys.OWNER, value=owner, set_default_type=str)
-        self._set_data(key=_ImageFileInfoKeys.GROUP, value=group, set_default_type=str)
+        self._set_data(key=_ImageFileInfoKeys.UID, value=uid, set_default_type=int)
+        self._set_data(key=_ImageFileInfoKeys.GID, value=gid, set_default_type=int)
         self._set_data(key=_ImageFileInfoKeys.SIZE, value=size, set_default_type=int)
 
     @property
@@ -107,19 +105,19 @@ class ImageFileInfo(BData):
         return oct(self.permissions)[-3:]
 
     @property
-    def owner(self) -> str:
-        """Get file owner username.
+    def uid(self) -> int:
+        """Get file owner user ID.
 
         ### Returns:
-        str - Owner username.
+        int - Owner user ID.
 
         ### Raises:
-        * ValueError: If owner is not set.
+        * ValueError: If uid is not set.
         """
-        tmp: Optional[str] = self._get_data(key=_ImageFileInfoKeys.OWNER)
+        tmp: Optional[int] = self._get_data(key=_ImageFileInfoKeys.UID)
         if tmp is None:
             raise Raise.error(
-                message="Owner is not set in ImageFileInfo.",
+                message="UID is not set in ImageFileInfo.",
                 exception=ValueError,
                 class_name=self._c_name,
                 currentframe=currentframe(),
@@ -127,19 +125,19 @@ class ImageFileInfo(BData):
         return tmp
 
     @property
-    def group(self) -> str:
-        """Get file group name.
+    def gid(self) -> int:
+        """Get file group ID.
 
         ### Returns:
-        str - Group name.
+        int - Group ID.
 
         ### Raises:
-        * ValueError: If group is not set.
+        * ValueError: If gid is not set.
         """
-        tmp: Optional[str] = self._get_data(key=_ImageFileInfoKeys.GROUP)
+        tmp: Optional[int] = self._get_data(key=_ImageFileInfoKeys.GID)
         if tmp is None:
             raise Raise.error(
-                message="Group is not set in ImageFileInfo.",
+                message="GID is not set in ImageFileInfo.",
                 exception=ValueError,
                 class_name=self._c_name,
                 currentframe=currentframe(),
@@ -171,15 +169,15 @@ class ImageFileInfo(BData):
         return (
             f"ImageFileInfo(path={self.path!r}, "
             f"permissions={oct(self.permissions)}, "
-            f"owner={self.owner!r}, "
-            f"group={self.group!r}, "
+            f"uid={self.uid}, "
+            f"gid={self.gid}, "
             f"size={self.size})"
         )
 
     def __str__(self) -> str:
         """Human-readable string representation."""
         return (
-            f"{self.path} ({self.owner}:{self.group}, "
+            f"{self.path} (uid={self.uid}, gid={self.gid}, "
             f"{self.permissions_str}, {self.size} bytes)"
         )
 
@@ -236,7 +234,7 @@ class FileFind(BData):
 
         ### Returns:
         List[ImageFileInfo] - List of ImageFileInfo objects containing file paths
-                              and metadata (permissions, owner, group, size).
+                              and metadata (permissions, uid, gid, size).
 
         ### Raises:
         * FileNotFoundError: If working directory does not exist.
@@ -247,7 +245,7 @@ class FileFind(BData):
         >>> finder = FileFind("/path/to/images")
         >>> images = finder.find_images()
         >>> for img in images:
-        ...     print(f"{img.path}: {img.owner}:{img.group} {img.permissions_str}")
+        ...     print(f"{img.path}: uid={img.uid} gid={img.gid} {img.permissions_str}")
         ```
         """
         work_path = Path(self.wrk_dir)
@@ -277,23 +275,12 @@ class FileFind(BData):
                         # Get file statistics
                         stat_info = file_path.stat()
 
-                        # Get owner and group names
-                        try:
-                            owner = pwd.getpwuid(stat_info.st_uid).pw_name
-                        except KeyError:
-                            owner = str(stat_info.st_uid)
-
-                        try:
-                            group = grp.getgrgid(stat_info.st_gid).gr_name
-                        except KeyError:
-                            group = str(stat_info.st_gid)
-
                         # Create ImageFileInfo object
                         img_info = ImageFileInfo(
                             path=str(file_path.absolute()),
                             permissions=stat_info.st_mode & 0o777,
-                            owner=owner,
-                            group=group,
+                            uid=stat_info.st_uid,
+                            gid=stat_info.st_gid,
                             size=stat_info.st_size,
                         )
                         image_files.append(img_info)

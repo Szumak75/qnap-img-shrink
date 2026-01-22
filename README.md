@@ -10,7 +10,7 @@ A Python application for batch resizing and compressing images with metadata pre
   - JPEG: configurable quality with optimization
   - PNG: maximum compression with interlacing
   - Support for BMP, TIFF formats
-- **Metadata preservation** - maintains file permissions, owner, and group
+- **Metadata preservation** - maintains file permissions, uid, and gid
 - **Test mode** - analyze without modifying files
 - **Comprehensive statistics** - detailed conversion reports
 

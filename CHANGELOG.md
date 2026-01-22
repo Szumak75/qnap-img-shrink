@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uses external `convert` and `identify` commands
   - Fully API-compatible with original Converter class
   - Format-specific compression for JPEG and PNG
-  - Metadata preservation (permissions, owner, group)
+  - Metadata preservation (permissions, uid, gid)
   - Test mode support
 - **converter_factory**: Factory function for automatic converter selection
   - `create_converter()` with preference option
@@ -54,5 +54,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests: 11 additional tests (Converter2 + factory)
 
 ### Changed
+- **BREAKING**: ImageFileInfo now stores uid/gid (int) instead of owner/group (str)
+  - Eliminates double translation (uid→name→uid)
+  - More reliable on systems with non-standard user/group mappings
+  - Fixes potential KeyError issues on QNAP and similar platforms
+  - Direct use of numeric IDs for os.chown() operations
+- Metadata preservation: Updated to use numeric uid/gid directly
 - Total test count: 77 tests (all passing)
+- Documentation updated to reflect uid/gid changes
 

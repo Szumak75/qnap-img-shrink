@@ -286,13 +286,8 @@ class Converter2(BData):
 
                     # Try to restore owner/group (may require privileges)
                     try:
-                        import pwd
-                        import grp
-
-                        uid = pwd.getpwnam(image_info.owner).pw_uid
-                        gid = grp.getgrnam(image_info.group).gr_gid
-                        os.chown(file_path, uid, gid)
-                    except (KeyError, PermissionError):
+                        os.chown(file_path, image_info.uid, image_info.gid)
+                    except PermissionError:
                         # Cannot restore ownership, skip
                         pass
                 else:

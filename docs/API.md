@@ -48,8 +48,8 @@ Container for image file metadata.
 ImageFileInfo(
     path: str,
     permissions: int,
-    owner: str,
-    group: str,
+    uid: int,
+    gid: int,
     size: int
 )
 ```
@@ -58,8 +58,8 @@ ImageFileInfo(
 - `path: str` - Absolute file path
 - `permissions: int` - File permissions (octal)
 - `permissions_str: str` - File permissions (string format)
-- `owner: str` - File owner username
-- `group: str` - File group name
+- `uid: int` - File owner user ID
+- `gid: int` - File group ID
 - `size: int` - File size in bytes
 
 ### Class: FileFind

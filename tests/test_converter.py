@@ -114,24 +114,12 @@ class TestConverterConvert:
     def create_image_file_info(self, path: Path) -> ImageFileInfo:
         """Helper to create ImageFileInfo from file."""
         stat_info = path.stat()
-        import pwd
-        import grp
-
-        try:
-            owner = pwd.getpwuid(stat_info.st_uid).pw_name
-        except KeyError:
-            owner = str(stat_info.st_uid)
-
-        try:
-            group = grp.getgrgid(stat_info.st_gid).gr_name
-        except KeyError:
-            group = str(stat_info.st_gid)
 
         return ImageFileInfo(
             path=str(path.absolute()),
             permissions=stat_info.st_mode & 0o777,
-            owner=owner,
-            group=group,
+            uid=stat_info.st_uid,
+            gid=stat_info.st_gid,
             size=stat_info.st_size,
         )
 
@@ -337,24 +325,13 @@ class TestConverterTestMode:
 
     def create_image_file_info(self, path: Path) -> ImageFileInfo:
         """Helper to create ImageFileInfo object."""
-        import pwd
-        import grp
-
         stat = os.stat(path)
-        try:
-            owner = pwd.getpwuid(stat.st_uid).pw_name
-        except KeyError:
-            owner = str(stat.st_uid)
-        try:
-            group = grp.getgrgid(stat.st_gid).gr_name
-        except KeyError:
-            group = str(stat.st_gid)
 
         return ImageFileInfo(
             path=str(path),
             permissions=stat.st_mode & 0o777,
-            owner=owner,
-            group=group,
+            uid=stat.st_uid,
+            gid=stat.st_gid,
             size=stat.st_size,
         )
 
