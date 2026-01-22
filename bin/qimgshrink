@@ -17,9 +17,27 @@
 SCRIPT_PATH="$(readlink -f "$0")"
 SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PYTHON3_PROFILE='/etc/profile.d/python3.bash'
 VENV_DIR="$PROJECT_ROOT/.venv"
 REQUIREMENTS="$PROJECT_ROOT/requirements.txt"
 PYTHON_APP="$PROJECT_ROOT/qimgshrink/main.py"
+
+# Source Python3 profile if exists (QNAP specific)
+# This sets up Python paths (adds Python bin directory to PATH)
+# QNAP profile already exports PATH, but we ensure it explicitly
+# Must be done early, before any Python operations
+if [ -f "$PYTHON3_PROFILE" ]; then
+    # Source the profile - this modifies PATH and exports it
+    . "$PYTHON3_PROFILE"
+    
+    # Explicit export for maximum compatibility
+    # (Some profiles may set variables without export)
+    export PATH
+    
+    # Optional: Export other common Python-related variables if set
+    [ -n "$PYTHONPATH" ] && export PYTHONPATH
+    [ -n "$LD_LIBRARY_PATH" ] && export LD_LIBRARY_PATH
+fi
 
 # Colors for output
 RED='\033[0;31m'
@@ -152,6 +170,11 @@ check_dependencies() {
 main() {
     print_info "QNAP Image Shrink - Launcher"
     print_info "Project root: $PROJECT_ROOT"
+    
+    # Show if QNAP Python profile was loaded
+    if [ -n "$PYTHON3_PROFILE" ] && [ -f "$PYTHON3_PROFILE" ]; then
+        print_info "QNAP Python3 profile loaded: $PYTHON3_PROFILE"
+    fi
     
     # Setup virtual environment
     setup_venv
